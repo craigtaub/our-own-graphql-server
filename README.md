@@ -5,4 +5,7 @@
 - TypeScript
 - graphql-codegen
 
-> yarn dev
+```bash
+yarn start:dev # faster
+yarn start:dev:lint # includes tslint
+```
