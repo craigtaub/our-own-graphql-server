@@ -5,6 +5,7 @@ generates:
   artifacts/codegen.ts:
     plugins:
       - "typescript"
-  artifacts/schema.json:
-    plugins:
-      - "introspection"
+  # # For introspected schema file
+  # artifacts/schema.json:
+  #   plugins:
+  #     - "introspection"
