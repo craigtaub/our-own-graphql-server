@@ -1,19 +1,30 @@
 module.exports = {
   compact: false,
-  presets: ['@babel/preset-env'],
+  presets: [
+    [
+      "@babel/preset-env",
+      {
+        targets: {
+          esmodules: true,
+        },
+      },
+    ],
+  ],
   plugins: [
-    ['module-resolver', {
-      root: ['./'],
-      extensions: ['.js', '.ts'],
-    }],
-    '@babel/plugin-transform-runtime',
+    ["inline-json-import", {}],
+    [
+      "module-resolver",
+      {
+        root: ["./"],
+        extensions: [".js", ".ts"],
+      },
+    ],
+    "@babel/plugin-transform-runtime",
   ],
   overrides: [
     {
-      test: ['**/*.ts'],
-      presets: [
-        '@babel/preset-typescript',
-      ],
+      test: ["**/*.ts"],
+      presets: ["@babel/preset-typescript"],
     },
   ],
 };

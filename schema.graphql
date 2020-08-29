@@ -1,14 +1,15 @@
-schema {
-  query: Query
-}
-
 type Query {
   me: User!
-  user(id: ID!): User
+  users(id: ID!): User
 }
 
 type User {
   id: ID!
   username: String!
   email: String!
+  address: Address!
+}
+
+type Address {
+  road: String!
 }
