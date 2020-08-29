@@ -1,5 +1,9 @@
 import express, {Request, Response} from 'express';
 import ourGraphQlServer from './graphql-server';
+import schema from '../artifacts/schema.json';
+
+console.log('schema', schema)
+// schema './artifacts/schema.graphql',
 
 const app = express();
 const port = 3000;
