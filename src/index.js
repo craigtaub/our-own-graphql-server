@@ -1,9 +1,9 @@
-import express, { Request, Response } from "express";
-import { importSchema } from "graphql-import";
-import { graphql } from "graphql";
-import { makeExecutableSchema } from "@graphql-tools/schema";
-import ourGraphQlServer from "./graphql-server";
-import { resolvers } from "./resolvers";
+const express = require("express");
+const { importSchema } = require("graphql-import");
+const { graphql } = require("graphql");
+const { makeExecutableSchema } = require("@graphql-tools/schema");
+const ourGraphQlServer = require("./graphql-server/index");
+const { resolvers } = require("./resolvers");
 
 // cant hand introspected schema
 const typeDefs = importSchema("schema.graphql");
@@ -21,7 +21,7 @@ graphql(schema, query).then((result) => {
 const app = express();
 const port = 3000;
 
-app.get("/", (req: Request, res: Response) => {
+app.get("/", (req, res) => {
   res.send("Hello World!" + ourGraphQlServer);
 });
 

@@ -1,6 +1,2 @@
 # install deps
 node_modules/
-# typescript outfile
-dist/
-# graphql-codegen artifacts
-artifacts/
