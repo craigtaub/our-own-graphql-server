@@ -3,3 +3,7 @@
 - NodeJS
 - Express
 - graphql-tools
+
+```
+> yarn test
+```

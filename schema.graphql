@@ -1,5 +1,4 @@
 type Query {
-  me: User!
   users(id: ID!): User
 }
 
