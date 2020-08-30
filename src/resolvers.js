@@ -3,7 +3,7 @@ const user = {
   username: "my username",
   email: "some@email.com",
 };
-module.exports.resolvers = {
+const resolvers = {
   Query: {
     me: () => user,
     users: (_, { id }) => {
@@ -19,3 +19,5 @@ module.exports.resolvers = {
     road: () => "some road",
   },
 };
+
+exports.resolvers = resolvers;

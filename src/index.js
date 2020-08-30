@@ -17,17 +17,17 @@ const schemaWithResolvers = addResolversToSchema({
 
 const query = 'query { users(id: "one") { email } }';
 // const query = "query { me { email } }";
-graphql(schema, query).then((result) => {
+graphql(schemaWithResolvers, query).then((result) => {
   console.log(result);
 });
 
-const app = express();
-const port = 3000;
+// const app = express();
+// const port = 3000;
 
-app.get("/", (req, res) => {
-  res.send("Hello World!" + ourGraphQlServer);
-});
+// app.get("/", (req, res) => {
+//   res.send("Hello World!" + ourGraphQlServer);
+// });
 
-app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`);
-});
+// app.listen(port, () => {
+//   console.log(`Example app listening at http://localhost:${port}`);
+// });
