@@ -7,7 +7,6 @@ const resolvers = {
   Query: {
     me: () => user,
     users: (_, { id }) => {
-      console.log("id", id);
       return user;
     },
   },

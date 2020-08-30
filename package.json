@@ -2,10 +2,8 @@
   "name": "our-own-graphql-server",
   "version": "1.0.0",
   "description": "",
-  "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "repository": {
     "type": "git",
@@ -17,14 +15,14 @@
     "url": "https://github.com/craigtaub/our-own-graphql-server/issues"
   },
   "homepage": "https://github.com/craigtaub/our-own-graphql-server#readme",
-  "dependencies": {
-    "express": "^4.17.1",
-    "graphql": "^15.3.0"
-  },
   "engines": {
     "node": ">=13.5.0"
   },
+  "dependencies": {
+    "graphql": "^15.3.0"
+  },
   "devDependencies": {
-    "graphql-tools": "latest"
+    "graphql-tools": "latest",
+    "mocha": "^8.1.3"
   }
 }
