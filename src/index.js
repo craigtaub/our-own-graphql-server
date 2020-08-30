@@ -1,19 +1,22 @@
 const express = require("express");
-const { importSchema } = require("graphql-import");
+const { loadSchemaSync } = require("@graphql-tools/load");
+const { GraphQLFileLoader } = require("@graphql-tools/graphql-file-loader");
+const { addResolversToSchema } = require("@graphql-tools/schema");
 const { graphql } = require("graphql");
-const { makeExecutableSchema } = require("@graphql-tools/schema");
 const ourGraphQlServer = require("./graphql-server/index");
 const { resolvers } = require("./resolvers");
 
-// cant hand introspected schema
-const typeDefs = importSchema("schema.graphql");
+const schema = loadSchemaSync("schema.graphql", {
+  loaders: [new GraphQLFileLoader()],
+});
+
+const schemaWithResolvers = addResolversToSchema({
+  schema,
+  resolvers,
+});
 
 const query = 'query { users(id: "one") { email } }';
 // const query = "query { me { email } }";
-const schema = makeExecutableSchema({
-  typeDefs,
-  resolvers,
-});
 graphql(schema, query).then((result) => {
   console.log(result);
 });
