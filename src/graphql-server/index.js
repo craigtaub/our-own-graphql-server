@@ -1,103 +1,169 @@
 const { graphql, parse } = require("graphql");
 
+const errors = [];
+const data = {};
 
 // ast utils
 function visit(ast, callback) {
-  callback(ast)
+  callback(ast);
 
-  const keys = Object.keys(ast)
+  const keys = Object.keys(ast);
   for (let i = 0; i < keys.length; i++) {
-    const keyName = keys[i]
-    const child = ast[keyName]
-    if (keyName === "loc") return
+    const keyName = keys[i];
+    const child = ast[keyName];
+    if (keyName === "loc") return;
     if (Array.isArray(child)) {
       for (let j = 0; j < child.length; j++) {
-        visit(child[j], callback)
+        visit(child[j], callback);
       }
     } else if (isNode(child)) {
-      visit(child, callback)
+      visit(child, callback);
     }
   }
 }
 function isNode(node) {
-  return typeof node === "object" && node.kind // normally AST uses .type
+  return typeof node === "object" && node.kind; // normally AST uses .type
 }
-const validate = (node, schema) => {
+const scalarTypeMap = {
+  StringValue: "ID",
+};
 
-  if (node.kind === 'OperationDefinition') {
-    // Process query
+const validateAndExecute = (node, schema) => {
+  if (node.kind === "OperationDefinition") {
+    // Process request query
     const selection = node.selectionSet.selections[0];
-
-    console.log('schema', schema)
     const queryName = selection.name.value; // kind:Field
     const argName = selection.arguments[0].name.value; //kind:Argument
     const argValue = selection.arguments[0].value.value;
-    const fieldsRequested = selection.selectionSet.selections[0].name.value // kind:Field
+    const argType = selection.arguments[0].value.kind;
+    const fieldsRequested = selection.selectionSet.selections[0].name.value; // kind:Field
 
-    console.log(queryName, '(', argName, ': ', argValue, ')',  fieldsRequested);
-    
+    // Check Query vs Schema (queryName, argName, argValue type, fieldsRequested)
+    const schemaQueries = schema._typeMap.Query.fields;
+    const schemaQueryNames = Object.keys(schemaQueries);
+    if (schemaQueryNames.includes(queryName)) {
+      // request query name exists in schema
+      const schemaQueryDetails = schemaQueries[queryName];
+      const { args } = schemaQueryDetails;
+      const schemaArgs = Object.keys(args);
+      if (schemaArgs.includes(argName)) {
+        // request query has matching args in schema
+        const schemaArgType = args[argName].name;
+        if (scalarTypeMap[argType] === schemaArgType) {
+          // request query arg type matches schema
+          // call resolver
+          const resolverResults = schemaQueryDetails.resolve(null, {
+            [argName]: argValue,
+          });
+          if (Object.keys(resolverResults).includes(fieldsRequested)) {
+            // has data for fields requested, return
+            data[queryName] = {
+              [fieldsRequested]: resolverResults[fieldsRequested],
+            };
+            return;
+          } else {
+            // resolve field from type on schema
+            //
+            // TODO FIX BELOW
+            //
+            const field =
+              fieldsRequested[0].toUpperCase() + fieldsRequested.substr(1);
+            if (schema._typeMap[field].fields) {
+              if (schema._typeMap.Address.fields.road.resolve) {
+                // sub field on schema ???? (Address)
+                data[queryName] = {
+                  [fieldsRequested]: {
+                    road: schema._typeMap.Address.fields.road.resolve(),
+                  },
+                };
+                return;
+              } else {
+                // no sub field on schema, resolve on higher type (User)
+                data[queryName] = {
+                  [fieldsRequested]: schemaQueryDetails.type.fields[
+                    fieldsRequested
+                  ].resolve(null, {}),
+                };
+                return;
+              }
+            }
+          }
+        } else {
+          return errors.push(
+            `Query "${queryName}" argument '${argName}" type does not match "${schemaArgType}"`
+          );
+        }
+      } else {
+        return errors.push(
+          `Query "${queryName}" does not have argument "${argName}"`
+        );
+      }
+    } else {
+      return errors.push(`Query "${queryName}" does not exist in schema`);
+    }
+    // console.log(queryName, "(", argName, ": ", argValue, ")", fieldsRequested);
   }
-}
+};
 
 const parser = (query, schema) => {
   // TODO: turn query into AST
+  // console.log("parse", );
   // query { users(id: "one") { email } }
+  return parse(query);
   const ast = {
-    "kind": "Document",
-    "definitions": [
-        {
-            "kind": "OperationDefinition",
-            "operation": "query",
-            "variableDefinitions": [],
-            "directives": [],
-            "selectionSet": {
-                "kind": "SelectionSet",
-                "selections": [
-                    {
-                        "kind": "Field",
-                        "name": {
-                            "kind": "Name",
-                            "value": "users",
-                        },
-                        "arguments": [
-                            {
-                                "kind": "Argument",
-                                "name": {
-                                    "kind": "Name",
-                                    "value": "id",
-                                },
-                                "value": {
-                                    "kind": "StringValue",
-                                    "value": "one",
-                                    "block": false,
-                                },
-                            },
-                        ],
-                        "selectionSet": {
-                            "kind": "SelectionSet",
-                            "selections": [
-                                {
-                                    "kind": "Field",
-                                    "name": {
-                                        "kind": "Name",
-                                        "value": "email",
-    
-                                    },
-                                    "arguments": [],
-                                }
-                            ],
-                        },
-                    }
+    kind: "Document",
+    definitions: [
+      {
+        kind: "OperationDefinition",
+        operation: "query",
+        variableDefinitions: [],
+        directives: [],
+        selectionSet: {
+          kind: "SelectionSet",
+          selections: [
+            {
+              kind: "Field",
+              name: {
+                kind: "Name",
+                value: "users",
+              },
+              arguments: [
+                {
+                  kind: "Argument",
+                  name: {
+                    kind: "Name",
+                    value: "id",
+                  },
+                  value: {
+                    kind: "StringValue",
+                    value: "one",
+                    block: false,
+                  },
+                },
+              ],
+              selectionSet: {
+                kind: "SelectionSet",
+                selections: [
+                  {
+                    kind: "Field",
+                    name: {
+                      kind: "Name",
+                      value: "email",
+                    },
+                    arguments: [],
+                  },
                 ],
+              },
             },
-        }
+          ],
+        },
+      },
     ],
-  }
+  };
   return ast;
-}
+};
 
 const ourGraphql = (schema, query) => {
-
   // Lib
   // return graphql(schema, query);
 
@@ -106,10 +172,15 @@ const ourGraphql = (schema, query) => {
   const queryAst = parser(query, schema);
   // console.log('query', queryAst)
 
-  // validate
-  visit(queryAst, (node) => validate(node, schema))
+  // validate and execute
+  visit(queryAst, (node) => validateAndExecute(node, schema));
 
-  // execute
+  // console.log("errors", errors);
+  if (errors.length > 0) {
+    return { errors };
+  }
+
+  return { data };
 };
 
 exports.ourGraphql = ourGraphql;

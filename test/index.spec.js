@@ -22,7 +22,7 @@ describe("graphql server example", () => {
     equal(stringify(expectedResult), stringify(result));
   });
 
-  it("should return existing users address", async () => {
+  it.only("should return existing users address", async () => {
     const schema = buildSchema(resolvers);
     const query = 'query { users(id: "one") { address { road } } }';
 
@@ -40,7 +40,7 @@ describe("graphql server example", () => {
     equal(stringify(expectedResult), stringify(result));
   });
 
-  it('should use resolver for "Address" over "User", if exists', async () => {
+  it.only('should use resolver for "Address" over "User", if exists', async () => {
     const clonedResolvers = Object.assign(
       {
         Address: {
