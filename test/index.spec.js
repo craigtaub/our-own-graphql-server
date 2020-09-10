@@ -6,7 +6,7 @@ const { ourGraphql } = require("../src/graphql-server");
 const stringify = (object) => JSON.stringify(object);
 
 describe("graphql server example", () => {
-  it("should return existing users email", async () => {
+  it.only("should return existing users email", async () => {
     const schema = buildSchema(resolvers);
     const query = 'query { users(id: "one") { email } }';
 
