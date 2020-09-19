@@ -22,8 +22,10 @@
 
 // Mine
 
-const { OurGraphQLSchema } = require('./graphql-server/definitions');
-const { addResolversToSchema: ourAddResolversToSchema } = require('./graphql-server/add-resolvers');
+const { OurGraphQLSchema } = require("./graphql-server/definitions");
+const {
+  addResolversToSchema: ourAddResolversToSchema,
+} = require("./graphql-server/add-resolvers");
 
 const buildSchema = (resolvers) => {
   // skipping step turning schema notation into object instances
@@ -31,7 +33,7 @@ const buildSchema = (resolvers) => {
   // console.log('Our Query: ', ourSchema._typeMap.Query.fields.users.resolve)
   const ourSchemaWithResolvers = ourAddResolversToSchema(ourSchema, resolvers);
   // console.log('Our Query: ', ourSchemaWithResolvers._typeMap.Query.fields.users.resolve)
-  
+
   // return schemaWithResolvers;
   return ourSchemaWithResolvers;
 };

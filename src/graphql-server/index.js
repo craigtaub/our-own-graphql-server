@@ -43,7 +43,9 @@ const validateAndExecute = (node, schema) => {
     let subField;
     // first sub-field
     if (selection.selectionSet.selections[0].selectionSet) {
-      subField = selection.selectionSet.selections[0].selectionSet.selections[0].name.value;
+      subField =
+        selection.selectionSet.selections[0].selectionSet.selections[0].name
+          .value;
     }
 
     // Check Query vs Schema (queryName, argName, argValue type, fieldsRequested)
@@ -58,15 +60,30 @@ const validateAndExecute = (node, schema) => {
         // request query has matching args in schema
         const schemaArgType = args[argName].name;
         if (scalarTypeMap[argType] === schemaArgType) {
+          let resolverResults;
           // request query arg type matches schema
-          // call resolver
-          const resolverResults = schemaQueryDetails.resolve(null, {
-            [argName]: argValue,
-          });
+          if (schemaQueryDetails.resolve) {
+            // call resolver
+            resolverResults = schemaQueryDetails.resolve(null, {
+              [argName]: argValue,
+            });
+          }
+          // else {
+          // non existing resolver for type
+          // data[queryName] = null;
+          // console.log("queryName", queryName);
+          // const error = {
+          //   message: `${queryName} is not defined`,
+          //   locations: [{ line: 1, column: 9 }],
+          //   path: [queryName],
+          // };
+          // errors.push(error);
+          // return;
+          // }
 
           if (!resolverResults) {
             // non existing data for type
-            data[queryName] = null
+            data[queryName] = null;
             return;
           }
           if (Object.keys(resolverResults).includes(fieldsRequested)) {
@@ -85,7 +102,9 @@ const validateAndExecute = (node, schema) => {
                 // has sub-field. resolve first
                 data[queryName] = {
                   [fieldsRequested]: {
-                    road: schema._typeMap[casedField].fields[subField].resolve(),
+                    road: schema._typeMap[casedField].fields[
+                      subField
+                    ].resolve(),
                   },
                 };
                 return;
@@ -111,7 +130,11 @@ const validateAndExecute = (node, schema) => {
         );
       }
     } else {
-      return errors.push(`Query "${queryName}" does not exist in schema`);
+      const error = {
+        message: `Cannot query field "${queryName}" on type "Query". Did you mean "users"?`,
+        locations: [{ line: 1, column: 9 }],
+      };
+      return errors.push(error);
     }
     // console.log(queryName, "(", argName, ": ", argValue, ")", fieldsRequested);
   }

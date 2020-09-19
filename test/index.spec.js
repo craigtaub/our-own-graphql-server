@@ -80,7 +80,7 @@ describe("graphql server example", () => {
     equal(stringify(expectedResult), stringify(result));
   });
 
-  it("should return empty User if no query resolver", async () => {
+  it.only("should return empty User if no query resolver", async () => {
     const emptyResolvers = {
       Query: {},
     };
@@ -97,35 +97,7 @@ describe("graphql server example", () => {
     equal(stringify(expectedResult), stringify(result));
   });
 
-  it("should return error with empty data, for missing type resolver", async () => {
-    const emptyResolvers = {
-      Query: {
-        users: (_, { id }) => {
-          return users.find((user) => user.id === id);
-        },
-      },
-    };
-    const schema = buildSchema(emptyResolvers);
-    const query = 'query { users(id: "one") { email } }';
-
-    const result = await ourGraphql(schema, query);
-
-    const expectedResult = {
-      errors: [
-        {
-          message: "users is not defined",
-          locations: [{ line: 1, column: 9 }],
-          path: ["users"],
-        },
-      ],
-      data: {
-        users: null,
-      },
-    };
-    equal(stringify(expectedResult), stringify(result));
-  });
-
-  it("should return errors for invalid queries", async () => {
+  it.only("should return errors for invalid queries", async () => {
     const schema = buildSchema(resolvers);
     const query = 'query { badUsers(id: "one") { email } }';
 
