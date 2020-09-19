@@ -63,6 +63,12 @@ const validateAndExecute = (node, schema) => {
           const resolverResults = schemaQueryDetails.resolve(null, {
             [argName]: argValue,
           });
+
+          if (!resolverResults) {
+            // non existing data for type
+            data[queryName] = null
+            return;
+          }
           if (Object.keys(resolverResults).includes(fieldsRequested)) {
             // has data for fields requested, return
             data[queryName] = {
