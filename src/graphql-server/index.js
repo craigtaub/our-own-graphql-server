@@ -36,7 +36,15 @@ const validateAndExecute = (node, schema) => {
     const argName = selection.arguments[0].name.value; //kind:Argument
     const argValue = selection.arguments[0].value.value;
     const argType = selection.arguments[0].value.kind;
+
+    // TODO fix below. traverse rather than manual
+    // first field
     const fieldsRequested = selection.selectionSet.selections[0].name.value; // kind:Field
+    let subField;
+    // first sub-field
+    if (selection.selectionSet.selections[0].selectionSet) {
+      subField = selection.selectionSet.selections[0].selectionSet.selections[0].name.value;
+    }
 
     // Check Query vs Schema (queryName, argName, argValue type, fieldsRequested)
     const schemaQueries = schema._typeMap.Query.fields;
@@ -63,22 +71,20 @@ const validateAndExecute = (node, schema) => {
             return;
           } else {
             // resolve field from type on schema
-            //
-            // TODO FIX BELOW
-            //
-            const field =
+            const casedField =
               fieldsRequested[0].toUpperCase() + fieldsRequested.substr(1);
-            if (schema._typeMap[field].fields) {
-              if (schema._typeMap.Address.fields.road.resolve) {
-                // sub field on schema ???? (Address)
+            if (schema._typeMap[casedField].fields) {
+              // has field
+              if (schema._typeMap[casedField].fields[subField].resolve) {
+                // has sub-field. resolve first
                 data[queryName] = {
                   [fieldsRequested]: {
-                    road: schema._typeMap.Address.fields.road.resolve(),
+                    road: schema._typeMap[casedField].fields[subField].resolve(),
                   },
                 };
                 return;
               } else {
-                // no sub field on schema, resolve on higher type (User)
+                // no sub-field on schema, resolve on higher type (User)
                 data[queryName] = {
                   [fieldsRequested]: schemaQueryDetails.type.fields[
                     fieldsRequested

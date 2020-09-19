@@ -66,7 +66,7 @@ describe("graphql server example", () => {
     equal(stringify(expectedResult), stringify(result));
   });
 
-  it("should return empty User for non-existing user", async () => {
+  it.only("should return empty User for non-existing user", async () => {
     const schema = buildSchema(resolvers);
     const query = 'query { users(id: "two") { email } }';
 
