@@ -6,7 +6,7 @@ const { ourGraphql } = require("../src/graphql-server");
 const stringify = (object) => JSON.stringify(object);
 
 describe("graphql server example", () => {
-  it.only("should return existing users email", async () => {
+  it("should return existing users email", async () => {
     const schema = buildSchema(resolvers);
     const query = 'query { users(id: "one") { email } }';
 
@@ -22,7 +22,7 @@ describe("graphql server example", () => {
     equal(stringify(expectedResult), stringify(result));
   });
 
-  it.only("should return existing users address", async () => {
+  it("should return existing users address", async () => {
     const schema = buildSchema(resolvers);
     const query = 'query { users(id: "one") { address { road } } }';
 
@@ -66,7 +66,7 @@ describe("graphql server example", () => {
     equal(stringify(expectedResult), stringify(result));
   });
 
-  it.only("should return empty User for non-existing user", async () => {
+  it("should return empty User for non-existing user", async () => {
     const schema = buildSchema(resolvers);
     const query = 'query { users(id: "two") { email } }';
 
@@ -80,7 +80,7 @@ describe("graphql server example", () => {
     equal(stringify(expectedResult), stringify(result));
   });
 
-  it.only("should return empty User if no query resolver", async () => {
+  it("should return empty User if no query resolver", async () => {
     const emptyResolvers = {
       Query: {},
     };
@@ -97,7 +97,7 @@ describe("graphql server example", () => {
     equal(stringify(expectedResult), stringify(result));
   });
 
-  it.only("should return errors for invalid queries", async () => {
+  it("should return errors for invalid queries", async () => {
     const schema = buildSchema(resolvers);
     const query = 'query { badUsers(id: "one") { email } }';
 

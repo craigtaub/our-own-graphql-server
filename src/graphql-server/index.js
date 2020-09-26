@@ -29,6 +29,23 @@ const scalarTypeMap = {
 };
 
 const validateAndExecute = (node, schema) => {
+  console.log('node kind', node.kind)
+  if (node.kind === "Field") {
+    // TODO - 
+    // data[queryName] = {
+    //   [fieldsRequested]: {
+    //     road: schema._typeMap[casedField].fields[
+    //       subField
+    //     ].resolve(),
+    //   },
+    // };
+    // return;
+  }
+  if (node.kind === "SelectionSet") {
+    node.selections.map((selection) => {
+      return validateAndExecute(selection, schema)
+    });
+  }
   if (node.kind === "OperationDefinition") {
     // Process request query
     const selection = node.selectionSet.selections[0];
@@ -41,16 +58,21 @@ const validateAndExecute = (node, schema) => {
     // first field
     const fieldsRequested = selection.selectionSet.selections[0].name.value; // kind:Field
     let subField;
+    let subFieldNode;
     // first sub-field
     if (selection.selectionSet.selections[0].selectionSet) {
       subField =
         selection.selectionSet.selections[0].selectionSet.selections[0].name
           .value;
+      subFieldNode = selection.selectionSet;
     }
 
     // Check Query vs Schema (queryName, argName, argValue type, fieldsRequested)
     const schemaQueries = schema._typeMap.Query.fields;
     const schemaQueryNames = Object.keys(schemaQueries);
+
+    console.log(queryName, "(", argName, ": ", argValue, ")", fieldsRequested , ".", subField);
+
     if (schemaQueryNames.includes(queryName)) {
       // request query name exists in schema
       const schemaQueryDetails = schemaQueries[queryName];
@@ -68,19 +90,6 @@ const validateAndExecute = (node, schema) => {
               [argName]: argValue,
             });
           }
-          // else {
-          // non existing resolver for type
-          // data[queryName] = null;
-          // console.log("queryName", queryName);
-          // const error = {
-          //   message: `${queryName} is not defined`,
-          //   locations: [{ line: 1, column: 9 }],
-          //   path: [queryName],
-          // };
-          // errors.push(error);
-          // return;
-          // }
-
           if (!resolverResults) {
             // non existing data for type
             data[queryName] = null;
@@ -100,14 +109,15 @@ const validateAndExecute = (node, schema) => {
               // has field
               if (schema._typeMap[casedField].fields[subField].resolve) {
                 // has sub-field. resolve first
-                data[queryName] = {
-                  [fieldsRequested]: {
-                    road: schema._typeMap[casedField].fields[
-                      subField
-                    ].resolve(),
-                  },
-                };
-                return;
+                // data[queryName] = {
+                //   [fieldsRequested]: {
+                //     road: schema._typeMap[casedField].fields[
+                //       subField
+                //     ].resolve(),
+                //   },
+                // };
+                // return;
+                return validateAndExecute(subFieldNode, schema)
               } else {
                 // no sub-field on schema, resolve on higher type (User)
                 data[queryName] = {
@@ -136,7 +146,6 @@ const validateAndExecute = (node, schema) => {
       };
       return errors.push(error);
     }
-    // console.log(queryName, "(", argName, ": ", argValue, ")", fieldsRequested);
   }
 };
 
@@ -208,7 +217,11 @@ const ourGraphql = (schema, query) => {
   // console.log('query', queryAst)
 
   // validate and execute
-  visit(queryAst, (node) => validateAndExecute(node, schema));
+
+  // Q: any point in traversing if just looking for OperationDefinition?
+  // visit(queryAst, (node) => validateAndExecute(node, schema));
+  // Q: manually give op?
+  validateAndExecute(queryAst.definitions[0], schema);
 
   // console.log("errors", errors);
   if (errors.length > 0) {
