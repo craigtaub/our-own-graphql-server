@@ -40,7 +40,7 @@ describe("graphql server example", () => {
     equal(stringify(expectedResult), stringify(result));
   });
 
-  it.only('should use resolver for "Address" over "User", if exists', async () => {
+  it('should use resolver for "Address" over "User", if exists', async () => {
     const clonedResolvers = Object.assign(
       {
         Address: {

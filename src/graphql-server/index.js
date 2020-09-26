@@ -28,24 +28,42 @@ const scalarTypeMap = {
   StringValue: "ID",
 };
 
+function caseField(string) {
+  return string[0].toUpperCase() + string.substr(1);
+}
+
+function processField(queryName, node, schema) {
+  const selection = node.selectionSet.selections[0];
+  const nodeName = node.name.value; // kind:Field
+  const selectionName = selection.name.value; // kind:Field
+
+  if (schema._typeMap[caseField(nodeName)]) {
+    // has sub-field. resolve first
+    data[queryName] = {
+      [nodeName]: {
+        [selectionName]: schema._typeMap[caseField(nodeName)].fields[
+          selectionName
+        ].resolve(),
+      },
+    };
+  } else {
+    // no sub-field on schema, resolve on higher type (User)
+    data[queryName] = {
+      [selectionName]: schema._typeMap.Query.fields[queryName].type.fields[
+        selectionName
+      ].resolve(null, {}),
+    };
+  }
+  return;
+}
+
+function processSelectionSet(queryName, node, schema) {
+  return node.selections.map((selection) => {
+    return processField(queryName, selection, schema);
+  });
+}
+
 const validateAndExecute = (node, schema) => {
-  console.log('node kind', node.kind)
-  if (node.kind === "Field") {
-    // TODO - 
-    // data[queryName] = {
-    //   [fieldsRequested]: {
-    //     road: schema._typeMap[casedField].fields[
-    //       subField
-    //     ].resolve(),
-    //   },
-    // };
-    // return;
-  }
-  if (node.kind === "SelectionSet") {
-    node.selections.map((selection) => {
-      return validateAndExecute(selection, schema)
-    });
-  }
   if (node.kind === "OperationDefinition") {
     // Process request query
     const selection = node.selectionSet.selections[0];
@@ -71,7 +89,17 @@ const validateAndExecute = (node, schema) => {
     const schemaQueries = schema._typeMap.Query.fields;
     const schemaQueryNames = Object.keys(schemaQueries);
 
-    console.log(queryName, "(", argName, ": ", argValue, ")", fieldsRequested , ".", subField);
+    console.log(
+      queryName,
+      "(",
+      argName,
+      ": ",
+      argValue,
+      ")",
+      fieldsRequested,
+      ".",
+      subField
+    );
 
     if (schemaQueryNames.includes(queryName)) {
       // request query name exists in schema
@@ -103,11 +131,13 @@ const validateAndExecute = (node, schema) => {
             return;
           } else {
             // resolve field from type on schema
-            const casedField =
-              fieldsRequested[0].toUpperCase() + fieldsRequested.substr(1);
-            if (schema._typeMap[casedField].fields) {
+            if (schema._typeMap[caseField(fieldsRequested)].fields) {
               // has field
-              if (schema._typeMap[casedField].fields[subField].resolve) {
+              if (
+                schema._typeMap[caseField(fieldsRequested)].fields[subField]
+                  .resolve
+              ) {
+                // REMOVED FOR TRAVERSE
                 // has sub-field. resolve first
                 // data[queryName] = {
                 //   [fieldsRequested]: {
@@ -117,15 +147,29 @@ const validateAndExecute = (node, schema) => {
                 //   },
                 // };
                 // return;
-                return validateAndExecute(subFieldNode, schema)
+                return processSelectionSet(queryName, subFieldNode, schema);
               } else {
+                // REMOVED FOR TRAVERSE
+                // console.log("fieldsRequested", fieldsRequested);
+                // console.log(
+                //   "schemaQueryDetails",
+                //   schemaQueryDetails.type.fields[fieldsRequested]
+                // );
+                // above equivalent to
+                // console.log(
+                //   "schema._typeMap.Query",
+                //   schema._typeMap.Query.fields[queryName].type.fields[
+                //     fieldsRequested
+                //   ].resolve(null, {})
+                // );
                 // no sub-field on schema, resolve on higher type (User)
-                data[queryName] = {
-                  [fieldsRequested]: schemaQueryDetails.type.fields[
-                    fieldsRequested
-                  ].resolve(null, {}),
-                };
-                return;
+                // data[queryName] = {
+                //   [fieldsRequested]: schemaQueryDetails.type.fields[
+                //     fieldsRequested
+                //   ].resolve(null, {}),
+                // };
+                // return;
+                return processField(queryName, selection, schema);
               }
             }
           }
