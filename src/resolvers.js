@@ -1,3 +1,7 @@
+const logger = (message) =>
+  //console.log(message);
+  null;
+
 const users = [
   {
     id: "one",
@@ -8,13 +12,16 @@ const users = [
 const resolvers = {
   Query: {
     users: (_, { id }) => {
+      logger("Query.users");
       return users.find((user) => user.id === id);
+      // return {};
     },
   },
   User: {
-    address: () => ({
-      road: "some road",
-    }),
+    address: () => {
+      logger("User.address");
+      return { road: "some road" };
+    },
   },
 };
 

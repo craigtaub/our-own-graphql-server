@@ -1,4 +1,4 @@
-// Scalar 
+// Scalar
 
 class OurGraphQLScalarType {
   constructor(config) {
@@ -21,7 +21,7 @@ function coerceString(inputValue) {
 }
 
 const GraphQLString = new OurGraphQLScalarType({
-  name: 'String',
+  name: "String",
   parseValue: coerceString,
   parseLiteral(valueNode) {
     // if (valueNode.kind !== Kind.STRING) {
@@ -31,7 +31,7 @@ const GraphQLString = new OurGraphQLScalarType({
   },
 });
 const GraphQLID = new OurGraphQLScalarType({
-  name: 'ID',
+  name: "ID",
   parseValue: coerceString,
   parseLiteral(valueNode) {
     // if (valueNode.kind !== Kind.STRING && valueNode.kind !== Kind.INT) {
@@ -45,44 +45,42 @@ const GraphQLID = new OurGraphQLScalarType({
   },
 });
 
-
 // Classes
 
-class OurGraphQLObjectType { 
+class OurGraphQLObjectType {
   name;
   fields;
   constructor(config) {
     this.name = config.name;
     this.fields = config.fields;
   }
-
 }
 
 const Address = new OurGraphQLObjectType({
-  name: 'Address',
+  name: "Address",
   fields: {
-    road: { type: GraphQLString }
+    road: { type: GraphQLString },
   },
-})
+});
 
 const User = new OurGraphQLObjectType({
-  name: 'User',
+  name: "User",
   fields: {
     id: { type: GraphQLString },
     username: { type: GraphQLString },
     email: { type: GraphQLString },
-    address: { type: Address},
+    address: { type: Address },
   },
 });
 
 const Query = new OurGraphQLObjectType({
-  name: 'Query',
+  name: "Query",
   fields: {
-    users: { 
+    users: {
       type: User,
       args: {
-        id: GraphQLID
-      }
+        id: GraphQLID,
+      },
     },
   },
 });
@@ -90,20 +88,20 @@ const Query = new OurGraphQLObjectType({
 class OurGraphQLSchema {
   description;
   extensions = {};
-  astNode = {
-    kind: 'SchemaDefinition',
-    description: undefined,
-    directives: [],
-    operationTypes: [
-      {
-        kind: 'OperationTypeDefinition',
-        operation: 'query',
-        type: { kind: 'NamedType', name: { kind: 'Name', value: 'Query', loc: null }, loc: null },
-        loc: { start: 9, end: 21 }
-      }
-    ],
-    loc: { start: 0, end: 23 }
-  };
+  // astNode = {
+  //   kind: 'SchemaDefinition',
+  //   description: undefined,
+  //   directives: [],
+  //   operationTypes: [
+  //     {
+  //       kind: 'OperationTypeDefinition',
+  //       operation: 'query',
+  //       type: { kind: 'NamedType', name: { kind: 'Name', value: 'Query', loc: null }, loc: null },
+  //       loc: { start: 9, end: 21 }
+  //     }
+  //   ],
+  //   loc: { start: 0, end: 23 }
+  // };
   extensionASTNodes = [];
   _queryType = Query;
   _mutationType;
@@ -111,7 +109,7 @@ class OurGraphQLSchema {
   // _directives: [ @skip, @include, @deprecated, @specifiedBy ],
   _typeMap = {
     Query,
-    ID: GraphQLID,
+    Id: GraphQLID,
     User,
     String: GraphQLString,
     Address,

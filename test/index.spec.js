@@ -6,7 +6,7 @@ const { ourGraphql } = require("../src/graphql-server");
 const stringify = (object) => JSON.stringify(object);
 
 describe("graphql server example", () => {
-  it("should return existing users email", async () => {
+  it.only("should return existing users email", async () => {
     const schema = buildSchema(resolvers);
     const query = 'query { users(id: "one") { email } }';
 
@@ -22,7 +22,7 @@ describe("graphql server example", () => {
     equal(stringify(expectedResult), stringify(result));
   });
 
-  it("should return existing users address", async () => {
+  it.only("should use resolver for 'User' over 'Query'", async () => {
     const schema = buildSchema(resolvers);
     const query = 'query { users(id: "one") { address { road } } }';
 
@@ -40,11 +40,14 @@ describe("graphql server example", () => {
     equal(stringify(expectedResult), stringify(result));
   });
 
-  it('should use resolver for "Address" over "User", if exists', async () => {
+  it.only('should use resolver for "Address" over "User", if exists', async () => {
     const clonedResolvers = Object.assign(
       {
         Address: {
-          road: () => "updated resolver road",
+          road: () => {
+            // console.log("Address.road");
+            return "updated resolver road";
+          },
         },
       },
       resolvers
@@ -97,9 +100,9 @@ describe("graphql server example", () => {
     equal(stringify(expectedResult), stringify(result));
   });
 
-  it("should return errors for invalid queries", async () => {
+  it("should return errors if query does not exist on 'Query', regardless of resolvers", async () => {
     const schema = buildSchema(resolvers);
-    const query = 'query { badUsers(id: "one") { email } }';
+    const query = 'query { badUsers(id: "one") { address { road }  } }';
 
     const result = await ourGraphql(schema, query);
 
