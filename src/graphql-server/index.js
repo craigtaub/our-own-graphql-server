@@ -3,9 +3,10 @@ const { graphql, parse, execute } = require("graphql");
 const errors = [];
 const data = {};
 
-const logger = (message) =>
-  //console.log(message);
-  null;
+const logger = (...message) => {
+  console.log(...message);
+  // null;
+};
 
 const scalarTypeMap = {
   StringValue: "ID",
@@ -50,10 +51,17 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
     // });
     // data[selectionName] = results;
     // const name = selection.name.value;
-    return;
+    // return resolve();
   }
   let data = [];
-  function executeSelectionSetV2(selectionSet, schemaType, casedField = null) {
+  // NOT USED...pass-by-ref
+  // let response = {};
+  function executeSelectionSetV2(
+    selectionSet,
+    schemaType,
+    resp,
+    casedField = null
+  ) {
     logger("\nexecuteSelectionSetV2");
     selectionSet.selections.map((selection) => {
       const field = selection.name.value;
@@ -64,20 +72,9 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
       // sub type exists, update data
       if (schemaType._fields[field]) {
         logger("sub-type exists");
+
         const found = data.find((item) => item.resolverData[field]);
-        if (found) {
-          // data[0].resolverData[field]) {
-          // has data for type. update for just field
-          logger("has data for type, update");
-          logger("found", found);
-          const updatedResolveData = { [field]: found.resolverData[field] }; // data[0].resolverData[field] };
-          logger("updatedResolveData", updatedResolveData);
-          data.push({
-            resolverData: updatedResolveData,
-            typeName: field,
-            schemaType: schemaType,
-          });
-        } else {
+        if (!found) {
           logger("no data for type, resolve it");
           const resolverData = schemaType._fields[field].resolve();
           logger("resolverData", resolverData);
@@ -88,16 +85,60 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
           });
         }
       }
+      // NOT USED...replaced with above...just the else
+      // if (found) {
+      // has data for type. update for just field
+      // NOT USED
+      // logger("has data for type, update");
+      // logger("found", found);
+      // const updatedResolveData = { [field]: found.resolverData[field] }; // data[0].resolverData[field] };
+      // logger("updatedResolveData", updatedResolveData);
+      // resp[field] = found.resolverData[field];
+      // data.push({
+      //   resolverData: updatedResolveData,
+      //   typeName: field,
+      //   schemaType: schemaType,
+      // });
+      // } else {
+      //   logger("no data for type, resolve it");
+      //   const resolverData = schemaType._fields[field].resolve();
+      //   logger("resolverData", resolverData);
+      //   data.push({
+      //     resolverData: resolverData,
+      //     typeName: field,
+      //     schemaType: schemaType,
+      //   });
+      // }
+      // }
 
       // execute field...type resolver
-      if (schemaType._fields[caseField(field)]) {
-        logger("cased sub-type exists");
-        const resolverData = schemaType._fields[caseField(field)].resolve(null);
-        logger("resolverData", resolverData);
+      // NOT USED
+      // if (schemaType._fields[caseField(field)]) {
+      //   logger("cased sub-type exists");
+      //   const resolverData = schemaType._fields[caseField(field)].resolve(null);
+      //   logger("resolverData", resolverData);
+      //   data.push({
+      //     resolverData,
+      //     typeName: field,
+      //     schemaType: caseField(field),
+      //   });
+      // }
+
+      // check for casedField resolver
+      if (
+        casedField &&
+        schema._typeMap[casedField] &&
+        schema._typeMap[casedField]._fields[field] &&
+        schema._typeMap[casedField]._fields[field].resolve
+      ) {
+        logger("casedField type has sub-field");
+        const resolverData = schema._typeMap[casedField]._fields[field].resolve(
+          null
+        );
         data.push({
           resolverData,
           typeName: field,
-          schemaType: caseField(field),
+          schemaType: casedField,
         });
       }
 
@@ -118,38 +159,35 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
         });
       }
 
-      // check for casedField resolver
-      if (
-        casedField &&
-        schema._typeMap[casedField] &&
-        schema._typeMap[casedField]._fields[field] &&
-        schema._typeMap[casedField]._fields[field].resolve
-      ) {
-        logger("casedField type has sub-field");
-        const resolverData = schema._typeMap[casedField]._fields[field].resolve(
-          null
-        );
-        data.push({
-          resolverData,
-          typeName: field,
-          schemaType: casedField,
-        });
-      }
-
       // process sub-fields
       // pushes so last item in array is deepest
       if (selection.selectionSet) {
-        logger("process sub-fields");
-        executeSelectionSetV2(
+        resp[field] = {};
+        logger("process sub-fields", resp);
+        return executeSelectionSetV2(
           selection.selectionSet,
           schemaType,
+          resp[field],
           caseField(field)
         );
+      } else {
+        // at end process data into response
+        const resData = data[data.length - 1].resolverData;
+        const item = typeof resData !== "object" ? resData : resData[field];
+        resp[field] = item;
+        logger("nothing");
+        return resp;
       }
     });
+    return resp;
   }
 
-  executeSelectionSetV2(opNode.selectionSet, operation.returnType);
+  const cleanRes = executeSelectionSetV2(
+    opNode.selectionSet,
+    operation.returnType,
+    {}
+  );
+  console.log("cleanRes", cleanRes);
 
   logger("DATA", data);
 
@@ -157,27 +195,27 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
 
   logger("\n");
 
-  let response = {};
-  const add = (resp, item, length) => {
-    logger("item.typeName", item.typeName);
-    resp[item.typeName] =
-      length === 0
-        ? item.resolverData[item.typeName]
-          ? item.resolverData[item.typeName]
-          : item.resolverData
-        : {}; // add data for last item
-  };
-  const process = (array, resp, prev) => {
-    const [head, ...tail] = array;
-    const updatedRes = prev ? resp[prev] : resp;
-    add(updatedRes, head, tail.length);
-    if (tail.length === 0) return;
-    process(tail, updatedRes, head.typeName);
-  };
-  process(data, response);
-  logger("response", response);
+  // TREE PROCESSING. DO IN MAIN
+  // const add = (resp, item, length) => {
+  //   logger("item.typeName", item.typeName);
+  //   resp[item.typeName] =
+  //     length === 0
+  //       ? item.resolverData[item.typeName]
+  //         ? item.resolverData[item.typeName]
+  //         : item.resolverData
+  //       : {}; // add data for last item
+  // };
+  // const process = (array, resp, prev) => {
+  //   const [head, ...tail] = array;
+  //   const updatedRes = prev ? resp[prev] : resp;
+  //   add(updatedRes, head, tail.length);
+  //   if (tail.length === 0) return;
+  //   process(tail, updatedRes, head.typeName);
+  // };
+  // process(data, response);
+  // logger("response", response);
 
-  return response;
+  return cleanRes;
 
   // return {
   //   [operation.queryName]: data.pop().resolverData,
