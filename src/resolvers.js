@@ -9,14 +9,17 @@ const users = [
 ];
 const resolvers = {
   Query: {
-    users: (_, { id }) => {
+    users: (...args) => {
+      const id = args[1].id;
       logger("RESOLVER - Query.users");
+      // logger(args);
       return users.find((user) => user.id === id);
     },
   },
   User: {
-    address: () => {
+    address: (...args) => {
       logger("RESOLVER - User.address");
+      // logger(...args);
       return { road: "some road" };
     },
   },

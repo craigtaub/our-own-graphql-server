@@ -44,8 +44,9 @@ describe("graphql server example", () => {
     const clonedResolvers = Object.assign(
       {
         Address: {
-          road: () => {
-            // console.log("Address.road");
+          road: (...args) => {
+            console.log("RESOLVER (test) - Address.road");
+            // console.log(args);
             return "updated resolver road";
           },
         },

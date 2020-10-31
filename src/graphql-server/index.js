@@ -1,15 +1,10 @@
 const { graphql, parse, execute } = require("graphql");
 
 const errors = [];
-const data = {};
 
 const logger = (...message) => {
   // console.log(...message);
   // null;
-};
-
-const scalarTypeMap = {
-  StringValue: "ID",
 };
 
 function caseField(string) {
@@ -19,7 +14,6 @@ function caseField(string) {
 const validateAndExecuteOpV2 = (opNode, schema) => {
   // node.kind === "OperationDefinition"
 
-  // 'Query' must always
   // Process request query
   const selection = opNode.selectionSet.selections[0];
   const operation = {
