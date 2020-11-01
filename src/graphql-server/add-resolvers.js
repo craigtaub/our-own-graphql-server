@@ -1,12 +1,10 @@
 const addResolversToSchema = (schema, resolvers) => {
-  // TODO: process each resolver and add to schema
-  schema._typeMap.Query.fields.users.resolve = resolvers.Query.users;
+  schema._typeMap.Query._fields.users.resolve = resolvers.Query.users;
   if (resolvers.User) {
-    schema._typeMap.User.fields.address.resolve = resolvers.User.address;
+    schema._typeMap.User._fields.address.resolve = resolvers.User.address;
   }
   if (resolvers.Address) {
-    // resolvers closer to field get priority
-    schema._typeMap.Address.fields.road.resolve = resolvers.Address.road;
+    schema._typeMap.Address._fields.road.resolve = resolvers.Address.road;
   }
 
   return schema;

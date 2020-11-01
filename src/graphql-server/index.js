@@ -77,7 +77,13 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
         schema._typeMap[schemaType]._fields[field] &&
         schema._typeMap[schemaType]._fields[field].resolve
       ) {
-        const resolverData = schemaType._fields[field].resolve();
+        logger(
+          `USING - resolver schema._typeMap[${schemaType}]._fields[${field}].resolve`
+        );
+        const resolverData = schema._typeMap[schemaType]._fields[
+          field
+        ].resolve();
+        logger("resolverData", resolverData, resp);
         resp[field] = resolverData;
       }
 
@@ -86,12 +92,14 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
         schema._typeMap.Query._fields[field] &&
         schema._typeMap.Query._fields[field].resolve
       ) {
+        logger(`USING - resolver schema._typeMap.Query._fields[${field}]`);
         const resolverData = schema._typeMap.Query._fields[field].resolve(
           null,
           {
             [operation.argName]: operation.argValue,
           }
         );
+        logger("resolverData", resolverData);
         // HOW does this work??
         const requestedField = selection.selectionSet.selections[0].name.value;
         resp[field] = { [requestedField]: resolverData[requestedField] };
