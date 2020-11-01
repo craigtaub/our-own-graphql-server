@@ -50,27 +50,6 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
       logger("field", field);
       logger("casedField", casedField);
 
-      // process sub-fields
-      // pushes so last item in array is deepest
-      if (selection.selectionSet) {
-        resp[field] = {};
-        logger("process sub-fields", resp);
-        executeSelectionSetV2(
-          selection.selectionSet,
-          schemaType,
-          resp[field],
-          caseField(field)
-        );
-      }
-
-      if (resolved) {
-        return resp;
-      }
-      logger("--CONTINUE--");
-      logger("schemaType", schemaType);
-      logger("field", field);
-      logger("casedField", casedField);
-
       // check for casedField resolver. scenario 3
       if (
         casedField &&
@@ -91,7 +70,7 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
         return resp;
       }
 
-      // scenario 2
+      // scenario 2. lower priority
       if (
         schema._typeMap[schemaType] &&
         schema._typeMap[schemaType]._fields &&
@@ -100,11 +79,9 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
       ) {
         const resolverData = schemaType._fields[field].resolve();
         resp[field] = resolverData;
-        resolved = true;
-        return resp;
       }
 
-      // scenario 3. how knows to use arg?
+      // scenario 3. high priority so last called. how knows to use arg?
       if (
         schema._typeMap.Query._fields[field] &&
         schema._typeMap.Query._fields[field].resolve
@@ -118,8 +95,17 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
         // HOW does this work??
         const requestedField = selection.selectionSet.selections[0].name.value;
         resp[field] = { [requestedField]: resolverData[requestedField] };
-        resolved = true;
-        return resp;
+      }
+
+      // process sub-fields at end
+      if (selection.selectionSet) {
+        logger("process sub-fields", resp);
+        executeSelectionSetV2(
+          selection.selectionSet,
+          schemaType,
+          resp[field],
+          caseField(field)
+        );
       }
     });
     return resp;
