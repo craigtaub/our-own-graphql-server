@@ -61,9 +61,9 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
         logger(
           `USING - resolver schema._typeMap[${casedField}]._fields[${field}]`
         );
-        const resolverData = schema._typeMap[casedField]._fields[field].resolve(
-          null
-        );
+        const resolverData = schema._typeMap[casedField]._fields[
+          field
+        ].resolve();
         logger("resolverData", resolverData, resp);
         resp[field] = resolverData;
         resolved = true;
@@ -81,7 +81,7 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
         resp[field] = resolverData;
       }
 
-      // scenario 3. high priority so last called. how knows to use arg?
+      // scenario 3. high priority so last called.
       if (
         schema._typeMap.Query._fields[field] &&
         schema._typeMap.Query._fields[field].resolve
@@ -121,80 +121,13 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
   return cleanRes;
 };
 
-const parser = (query, schema) => {
-  // TODO: turn query into AST
-  // logger("parse", );
-  // query { users(id: "one") { email } }
-  return parse(query);
-  const ast = {
-    kind: "Document",
-    definitions: [
-      {
-        kind: "OperationDefinition",
-        operation: "query",
-        variableDefinitions: [],
-        directives: [],
-        selectionSet: {
-          kind: "SelectionSet",
-          selections: [
-            {
-              kind: "Field",
-              name: {
-                kind: "Name",
-                value: "users",
-              },
-              arguments: [
-                {
-                  kind: "Argument",
-                  name: {
-                    kind: "Name",
-                    value: "id",
-                  },
-                  value: {
-                    kind: "StringValue",
-                    value: "one",
-                    block: false,
-                  },
-                },
-              ],
-              selectionSet: {
-                kind: "SelectionSet",
-                selections: [
-                  {
-                    kind: "Field",
-                    name: {
-                      kind: "Name",
-                      value: "email",
-                    },
-                    arguments: [],
-                  },
-                ],
-              },
-            },
-          ],
-        },
-      },
-    ],
-  };
-  return ast;
-};
-
-const ourGraphql = (schema, query) => {
+const ourGraphql = (queryAst, schema) => {
   // Lib
   // return graphql(schema, query);
 
   // Mine
-  // parse
-  const queryAst = parser(query, schema);
-  // logger('query', queryAst)
-
   // validate and execute...resolve operation manually
   const data = validateAndExecuteOpV2(queryAst.definitions[0], schema);
-
-  // logger("errors", errors);
-  if (errors.length > 0) {
-    return { errors };
-  }
 
   return { data };
 };

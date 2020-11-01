@@ -2,6 +2,11 @@ const { equal } = require("assert");
 const { resolvers } = require("../src/resolvers");
 const { buildSchema } = require("../src/buildSchema");
 const { ourGraphql } = require("../src/graphql-server");
+const {
+  scenarioOne,
+  scenarioTwo,
+  scenarioThree,
+} = require("../src/graphql-server/ast");
 
 const stringify = (object) => JSON.stringify(object);
 
@@ -10,7 +15,7 @@ describe("graphql server example", () => {
     const schema = buildSchema(resolvers);
     const query = 'query { users(id: "one") { email } }';
 
-    const result = await ourGraphql(schema, query);
+    const result = await ourGraphql(scenarioOne, schema);
 
     const expectedResult = {
       data: {
@@ -26,7 +31,7 @@ describe("graphql server example", () => {
     const schema = buildSchema(resolvers);
     const query = 'query { users(id: "one") { address { road } } }';
 
-    const result = await ourGraphql(schema, query);
+    const result = await ourGraphql(scenarioTwo, schema);
 
     const expectedResult = {
       data: {
@@ -56,7 +61,7 @@ describe("graphql server example", () => {
     const schema = buildSchema(clonedResolvers);
     const query = 'query { users(id: "one") { address { road } } }';
 
-    const result = await ourGraphql(schema, query);
+    const result = await ourGraphql(scenarioThree, schema);
 
     const expectedResult = {
       data: {
