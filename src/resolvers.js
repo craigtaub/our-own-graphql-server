@@ -1,5 +1,6 @@
-const logger = (message) => console.log(message);
-// null;
+const logger = (message) => {
+  console.log(message);
+};
 
 const users = [
   {
@@ -12,14 +13,14 @@ const resolvers = {
     users: (...args) => {
       const id = args[1].id;
       logger("RESOLVER - Query.users");
-      // logger(args);
+      logger(args);
       return users.find((user) => user.id === id);
     },
   },
   User: {
     address: (...args) => {
       logger("RESOLVER - User.address");
-      // logger(...args);
+      logger(...args);
       return { road: "some road" };
     },
   },

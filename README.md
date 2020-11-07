@@ -14,7 +14,7 @@
 
 - query { users(id: "one") { email } }
 - Resolver: Query.users.
-  - Args: undefined, {id:value}, undefined, ast (fieldName: users)
+  - Args: undefined, {id:value}
 - `schema._typeMap.Query._fields[users]`
 
 2. Sub-level resolver is
@@ -30,7 +30,7 @@
 - query { users(id: "one") { address { road } } }
 - Calls both above then:
 - Resolver: Address.road.
-  - Args: User.address resolver data, {}, undefined, ast (fieldName: road)
+  - Args: User.address resolver data
 - `schema._typeMap.Address._fields[road]`
 
 ## Issues

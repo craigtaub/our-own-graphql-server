@@ -1,4 +1,4 @@
-const { equal } = require("assert");
+const { deepEqual } = require("assert");
 const { resolvers } = require("../src/resolvers");
 const { buildSchema } = require("../src/buildSchema");
 const { ourGraphql } = require("../src/graphql-server");
@@ -15,7 +15,7 @@ describe("graphql server example", () => {
     const schema = buildSchema(resolvers);
     const query = 'query { users(id: "one") { email } }';
 
-    const result = await ourGraphql(scenarioOne, schema);
+    const result = await ourGraphql(scenarioOne, schema, query);
 
     const expectedResult = {
       data: {
@@ -24,14 +24,14 @@ describe("graphql server example", () => {
         },
       },
     };
-    equal(stringify(expectedResult), stringify(result));
+    deepEqual(expectedResult, result);
   });
 
   it("should use resolver for 'User' over 'Query'", async () => {
     const schema = buildSchema(resolvers);
     const query = 'query { users(id: "one") { address { road } } }';
 
-    const result = await ourGraphql(scenarioTwo, schema);
+    const result = await ourGraphql(scenarioTwo, schema, query);
 
     const expectedResult = {
       data: {
@@ -42,16 +42,18 @@ describe("graphql server example", () => {
         },
       },
     };
-    equal(stringify(expectedResult), stringify(result));
+    deepEqual(expectedResult, result);
   });
 
-  it('should use resolver for "Address" over "User", if exists', async () => {
+  it('if exists should use resolver for "Address" over "User" and pass parent resolver data', async () => {
+    let resolverArgs;
     const clonedResolvers = Object.assign(
       {
         Address: {
           road: (...args) => {
             console.log("RESOLVER (test) - Address.road");
-            // console.log(args);
+            console.log(...args);
+            resolverArgs = args;
             return "updated resolver road";
           },
         },
@@ -61,7 +63,7 @@ describe("graphql server example", () => {
     const schema = buildSchema(clonedResolvers);
     const query = 'query { users(id: "one") { address { road } } }';
 
-    const result = await ourGraphql(scenarioThree, schema);
+    const result = await ourGraphql(scenarioThree, schema, query);
 
     const expectedResult = {
       data: {
@@ -72,7 +74,8 @@ describe("graphql server example", () => {
         },
       },
     };
-    equal(stringify(expectedResult), stringify(result));
+    deepEqual(expectedResult, result);
+    deepEqual(resolverArgs, ["some road"]); // not right for real graphql
   });
 
   // IGNORE

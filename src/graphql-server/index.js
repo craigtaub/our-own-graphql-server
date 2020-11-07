@@ -4,7 +4,6 @@ const errors = [];
 
 const logger = (...message) => {
   // console.log(...message);
-  // null;
 };
 
 function caseField(string) {
@@ -23,7 +22,6 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
     argType: selection.arguments[0].value.kind, // FOR validation
     returnType: schema._typeMap.Query._fields[selection.name.value].type,
   };
-  let resolved = false;
 
   logger(
     "LOG: ",
@@ -40,7 +38,8 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
   function executeSelectionSetV2(
     selectionSet,
     schemaType,
-    resp,
+    userResp,
+    allResp,
     casedField = null
   ) {
     logger("\nexecuteSelectionSetV2");
@@ -50,24 +49,25 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
       logger("field", field);
       logger("casedField", casedField);
 
-      // check for casedField resolver. scenario 3
+      // scenario 1. high priority so last called.
       if (
-        casedField &&
-        schema._typeMap[casedField] &&
-        schema._typeMap[casedField]._fields[field] &&
-        schema._typeMap[casedField]._fields[field].resolve
+        schema._typeMap.Query._fields[field] &&
+        schema._typeMap.Query._fields[field].resolve
       ) {
-        logger("casedField type has sub-field");
-        logger(
-          `USING - resolver schema._typeMap[${casedField}]._fields[${field}]`
+        logger(`USING 1. - resolver schema._typeMap.Query._fields[${field}]`);
+        const resolverData = schema._typeMap.Query._fields[field].resolve(
+          null,
+          {
+            [operation.argName]: operation.argValue,
+          }
         );
-        const resolverData = schema._typeMap[casedField]._fields[
-          field
-        ].resolve();
-        logger("resolverData", resolverData, resp);
-        resp[field] = resolverData;
-        resolved = true;
-        return resp;
+        logger("resolverData", resolverData);
+        // HOW does this work??
+        // i havnt requested email, but should still pass resolver data to other resolvers
+        const requestedField = selection.selectionSet.selections[0].name.value;
+        // resp[field] = { [requestedField]: resolverData[requestedField] };
+        userResp[field] = { [requestedField]: resolverData[requestedField] };
+        allResp[field] = resolverData;
       }
 
       // scenario 2. lower priority
@@ -78,50 +78,55 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
         schema._typeMap[schemaType]._fields[field].resolve
       ) {
         logger(
-          `USING - resolver schema._typeMap[${schemaType}]._fields[${field}].resolve`
+          `USING - 2. resolver schema._typeMap[${schemaType}]._fields[${field}].resolve`
         );
-        const resolverData = schema._typeMap[schemaType]._fields[
-          field
-        ].resolve();
-        logger("resolverData", resolverData, resp);
-        resp[field] = resolverData;
-      }
-
-      // scenario 3. high priority so last called.
-      if (
-        schema._typeMap.Query._fields[field] &&
-        schema._typeMap.Query._fields[field].resolve
-      ) {
-        logger(`USING - resolver schema._typeMap.Query._fields[${field}]`);
-        const resolverData = schema._typeMap.Query._fields[field].resolve(
-          null,
-          {
-            [operation.argName]: operation.argValue,
-          }
+        const resolverData = schema._typeMap[schemaType]._fields[field].resolve(
+          allResp // parent resolver data
         );
         logger("resolverData", resolverData);
-        // HOW does this work??
-        const requestedField = selection.selectionSet.selections[0].name.value;
-        resp[field] = { [requestedField]: resolverData[requestedField] };
+        allResp[field] = resolverData;
+        userResp[field] = resolverData;
+      }
+
+      // check for casedField resolver. scenario 3
+      if (
+        casedField &&
+        schema._typeMap[casedField] &&
+        schema._typeMap[casedField]._fields[field] &&
+        schema._typeMap[casedField]._fields[field].resolve
+      ) {
+        logger("casedField type has sub-field");
+        logger(
+          `USING - 3. resolver schema._typeMap[${casedField}]._fields[${field}]`
+        );
+        const resolverData = schema._typeMap[casedField]._fields[field].resolve(
+          allResp[field]
+        );
+        logger("resolverData", resolverData);
+        userResp[field] = resolverData;
+        allResp[field] = resolverData;
+        return userResp;
       }
 
       // process sub-fields at end
       if (selection.selectionSet) {
-        logger("process sub-fields", resp);
+        logger("process sub-fields", allResp);
         executeSelectionSetV2(
           selection.selectionSet,
           schemaType,
-          resp[field],
+          userResp[field],
+          allResp[field],
           caseField(field)
         );
       }
     });
-    return resp;
+    return userResp;
   }
 
   const cleanRes = executeSelectionSetV2(
     opNode.selectionSet,
     operation.returnType,
+    {},
     {}
   );
   logger("cleanRes", cleanRes);
@@ -129,7 +134,7 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
   return cleanRes;
 };
 
-const ourGraphql = (queryAst, schema) => {
+const ourGraphql = (queryAst, schema, query) => {
   // Lib
   // return graphql(schema, query);
 
