@@ -10,7 +10,7 @@ const {
 
 const stringify = (object) => JSON.stringify(object);
 
-describe("graphql server example", () => {
+describe.skip("graphql server example", () => {
   it("should return existing users email", async () => {
     const schema = buildSchema(resolvers);
     const query = 'query { users(id: "one") { email } }';

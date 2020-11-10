@@ -1,7 +1,3 @@
-const { graphql, parse, execute } = require("graphql");
-
-const errors = [];
-
 const logger = (...message) => {
   // console.log(...message);
 };
@@ -17,23 +13,13 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
   const selection = opNode.selectionSet.selections[0];
   const operation = {
     queryName: selection.name.value, // kind:Field
-    argName: selection.arguments[0].name.value, // kind:Argument
-    argValue: selection.arguments[0].value.value,
-    argType: selection.arguments[0].value.kind, // FOR validation
     returnType: schema._typeMap.Query._fields[selection.name.value].type,
   };
-
-  logger(
-    "LOG: ",
-    operation.queryName,
-    "(",
-    operation.argName,
-    ": ",
-    operation.argValue,
-    ")",
-    ": ",
-    operation.returnType
-  );
+  if (selection.arguments[0]) {
+    operation.argName = selection.arguments[0].name.value; // kind:Argument
+    operation.argValue = selection.arguments[0].value.value;
+    operation.argType = selection.arguments[0].value.kind; // FOR validation
+  }
 
   function executeSelectionSetV2(
     selectionSet,
@@ -62,9 +48,8 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
           }
         );
         logger("resolverData", resolverData);
-        const requestedField = selection.selectionSet.selections[0].name.value;
-        userResp[field] = { [requestedField]: resolverData[requestedField] };
-        allResp[field] = resolverData;
+        allResp[field] = resolverData || {};
+        userResp[field] = resolverData || {};
       }
 
       // scenario 2.
@@ -81,28 +66,28 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
           allResp // parent resolver data
         );
         logger("resolverData", resolverData);
-        allResp[field] = resolverData;
-        userResp[field] = resolverData;
+        allResp[field] = resolverData || {};
+        userResp[field] = resolverData || {};
       }
 
-      // check for fieldType resolver. scenario 3
-      if (
-        fieldType &&
-        schema._typeMap[fieldType] &&
-        schema._typeMap[fieldType]._fields[field] &&
-        schema._typeMap[fieldType]._fields[field].resolve
-      ) {
-        logger("fieldType type has sub-field");
-        logger(
-          `USING - 3. resolver schema._typeMap[${fieldType}]._fields[${field}]`
-        );
-        const resolverData = schema._typeMap[fieldType]._fields[field].resolve(
-          allResp[field] // parent resolver
-        );
-        logger("resolverData", resolverData);
-        userResp[field] = resolverData;
-        allResp[field] = resolverData;
-      }
+      // check for fieldType resolver. scenario 3. not needed
+      // if (
+      //   fieldType &&
+      //   schema._typeMap[fieldType] &&
+      //   schema._typeMap[fieldType]._fields[field] &&
+      //   schema._typeMap[fieldType]._fields[field].resolve
+      // ) {
+      //   logger("fieldType type has sub-field");
+      //   logger(
+      //     `USING - 3. resolver schema._typeMap[${fieldType}]._fields[${field}]`
+      //   );
+      //   const resolverData = schema._typeMap[fieldType]._fields[field].resolve(
+      //     allResp[field] // parent resolver
+      //   );
+      //   logger("resolverData", resolverData);
+      //   userResp[field] = resolverData;
+      //   allResp[field] = resolverData;
+      // }
 
       // process sub-fields at end
       if (selection.selectionSet) {
@@ -130,13 +115,14 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
   return cleanRes;
 };
 
-const ourGraphql = (queryAst, schema, query) => {
+// const ourGraphql = (queryAst, schema, query) => {
+const ourGraphql = ({ document, schema }) => {  
   // Lib
   // return graphql(schema, query);
 
   // Mine
   // validate and execute...resolve operation manually
-  const data = validateAndExecuteOpV2(queryAst.definitions[0], schema);
+  const data = validateAndExecuteOpV2(document.definitions[0], schema);
 
   return { data };
 };
