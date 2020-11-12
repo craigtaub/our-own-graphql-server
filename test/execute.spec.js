@@ -23,6 +23,10 @@ describe("graphql execute", () => {
   it("basic root-level with args", async () => {
     let rootQueryTestResolveArgs;
 
+    // build schema
+    // type Query {
+    //   test(aInt: String!): String!
+    // }
     const schema = new GraphQLSchema({
       query: new GraphQLObjectType({
         name: "Query",
@@ -54,6 +58,12 @@ describe("graphql execute", () => {
     let rootQueryTestResolveArgs;
 
     // build schema
+    // type Query {
+    //   test(aInt: Int!): Person!
+    // }
+    // type Person {
+    //   name: String!
+    // }
     const PersonType = new GraphQLObjectType({
       name: "Person",
       fields: {
@@ -74,7 +84,6 @@ describe("graphql execute", () => {
           test: {
             type: PersonType,
             args: {
-              aStr: { type: GraphQLString },
               aInt: { type: GraphQLInt },
             },
             resolve: (source, args) => {
@@ -105,6 +114,13 @@ describe("graphql execute", () => {
     const parentResponse = { name: "wrong name" };
 
     // build schema
+    // type Query {
+    //   test(aInt: Int!): Person!
+    //   person: Person!
+    // }
+    // type Person {
+    //   name: String!
+    // }
     const PersonType = new GraphQLObjectType({
       name: "Person",
       fields: {
@@ -125,7 +141,6 @@ describe("graphql execute", () => {
           test: {
             type: PersonType,
             args: {
-              aStr: { type: GraphQLString },
               aInt: { type: GraphQLInt },
             },
             resolve: (source, args) => {

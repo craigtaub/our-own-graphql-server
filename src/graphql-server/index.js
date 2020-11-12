@@ -35,7 +35,7 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
       logger("field", field);
       logger("fieldType", fieldType);
 
-      // scenario 1.
+      // scenario 1. Root query
       if (
         schema._typeMap.Query._fields[field] &&
         schema._typeMap.Query._fields[field].resolve
@@ -52,7 +52,7 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
         userResp[field] = resolverData || {};
       }
 
-      // scenario 2.
+      // scenario 2 and 3. Schema type
       if (
         schema._typeMap[schemaType] &&
         schema._typeMap[schemaType]._fields &&
@@ -69,25 +69,6 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
         allResp[field] = resolverData || {};
         userResp[field] = resolverData || {};
       }
-
-      // check for fieldType resolver. scenario 3. not needed
-      // if (
-      //   fieldType &&
-      //   schema._typeMap[fieldType] &&
-      //   schema._typeMap[fieldType]._fields[field] &&
-      //   schema._typeMap[fieldType]._fields[field].resolve
-      // ) {
-      //   logger("fieldType type has sub-field");
-      //   logger(
-      //     `USING - 3. resolver schema._typeMap[${fieldType}]._fields[${field}]`
-      //   );
-      //   const resolverData = schema._typeMap[fieldType]._fields[field].resolve(
-      //     allResp[field] // parent resolver
-      //   );
-      //   logger("resolverData", resolverData);
-      //   userResp[field] = resolverData;
-      //   allResp[field] = resolverData;
-      // }
 
       // process sub-fields at end
       if (selection.selectionSet) {
@@ -116,7 +97,7 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
 };
 
 // const ourGraphql = (queryAst, schema, query) => {
-const ourGraphql = ({ document, schema }) => {  
+const ourGraphql = ({ document, schema }) => {
   // Lib
   // return graphql(schema, query);
 

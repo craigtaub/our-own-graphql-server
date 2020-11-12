@@ -8,7 +8,7 @@
 > yarn test
 ```
 
-## Scenarios
+## Scenarios - TODO
 
 1. Top level resolver is
 
@@ -25,18 +25,9 @@
   - Args: Query.users resolver data
 - `schema._typeMap.User._fields[address]`
 
-3. 2nd Sub-level resolver is
-
-- query { users(id: "one") { address { road } } }
-- Calls both above then:
-- Resolver: Address.road.
-  - Args: User.address resolver data
-- `schema._typeMap.Address._fields[road]`
-
 ## Issues
 
 - does it work with other multiple selectionSets?
 - only hands args for (1)
-- doesnt call all resolvers for (3)
 - doesnt return error if query does not exist
 - doesnt work with no empty no user data, or no user resolver
