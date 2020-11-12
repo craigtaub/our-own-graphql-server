@@ -2,80 +2,49 @@ const logger = (...message) => {
   // console.log(...message);
 };
 
-function caseField(string) {
-  return string[0].toUpperCase() + string.substr(1);
-}
+const caseField = (string) => string[0].toUpperCase() + string.substr(1);
 
-const validateAndExecuteOpV2 = (opNode, schema) => {
+const execute = (opNode, schemaTypes) => {
   // node.kind === "OperationDefinition"
 
+  const { Query, ...rootTypes } = schemaTypes;
   // Process request query
   const selection = opNode.selectionSet.selections[0];
-  const operation = {
-    queryName: selection.name.value, // kind:Field
-    returnType: schema._typeMap.Query._fields[selection.name.value].type,
-  };
+  // op query: selection.name.value, // kind:Field
+  const returnType = Query._fields[selection.name.value].type;
+  const operation = {};
+
   if (selection.arguments[0]) {
     operation.argName = selection.arguments[0].name.value; // kind:Argument
     operation.argValue = selection.arguments[0].value.value;
     // would validate against "selection.arguments[0].value.kind"
   }
 
-  function executeSelectionSetV2(
-    selectionSet,
-    schemaType,
-    userResp,
-    allResp,
-    fieldType
-  ) {
-    logger("\nexecuteSelectionSetV2");
+  function executeFields(selectionSet, userResp, fieldType) {
     selectionSet.selections.map((selection) => {
       const field = selection.name.value;
-      logger("schemaType", schemaType);
-      logger("field", field);
-      logger("fieldType", fieldType);
 
-      // scenario 1. Root query
-      if (
-        schema._typeMap.Query._fields[field] &&
-        schema._typeMap.Query._fields[field].resolve
-      ) {
-        logger(`USING 1. - resolver schema._typeMap.Query._fields[${field}]`);
-        const resolverData = schema._typeMap.Query._fields[field].resolve(
-          null,
-          { [operation.argName]: operation.argValue }
-        );
-        logger("resolverData", resolverData);
-        allResp[field] = resolverData || {};
-        userResp[field] = resolverData || {};
+      // scenario 1. Root Query
+      if (Query?._fields[field]?.resolve) {
+        const resolverData = Query._fields[field].resolve(null, {
+          [operation.argName]: operation.argValue,
+        });
+        userResp[field] = resolverData; // || {};
       }
 
       // scenario 2 and 3. Schema type
-      if (
-        schema._typeMap[schemaType]._fields &&
-        schema._typeMap[schemaType]._fields[field] &&
-        schema._typeMap[schemaType]._fields[field].resolve
-      ) {
-        logger(
-          `USING - 2. resolver schema._typeMap[${schemaType}]._fields[${field}].resolve`
+      if (rootTypes?.[returnType]?._fields?.[field]?.resolve) {
+        const resolverData = rootTypes[returnType]._fields[field].resolve(
+          userResp // parent resolver data
         );
-        // parent resolver data
-        const resolverData = schema._typeMap[schemaType]._fields[field].resolve(
-          allResp
-        );
-        logger("resolverData", resolverData);
-        allResp[field] = resolverData || {};
-        userResp[field] = resolverData || {};
+        userResp[field] = resolverData;
       }
 
       // process sub-fields at end
       if (selection.selectionSet) {
-        logger("process sub-fields", allResp);
-        executeSelectionSetV2(
+        executeFields(
           selection.selectionSet,
-          schemaType,
           userResp[field],
-          allResp[field],
           caseField(field)
         );
       }
@@ -83,27 +52,11 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
     return userResp;
   }
 
-  const cleanRes = executeSelectionSetV2(
-    opNode.selectionSet,
-    operation.returnType,
-    {},
-    {}
-  );
-  logger("cleanRes", cleanRes);
-
-  return cleanRes;
+  return executeFields(opNode.selectionSet, {});
 };
 
-// const ourGraphql = (queryAst, schema, query) => {
-const ourGraphql = ({ document, schema }) => {
-  // Lib
-  // return graphql(schema, query);
-
-  // Mine
-  // validate and execute...resolve operation manually
-  const data = validateAndExecuteOpV2(document.definitions[0], schema);
-
-  return { data };
-};
+const ourGraphql = ({ document, schema }) => ({
+  data: execute(document.definitions[0], schema._typeMap),
+});
 
 exports.ourGraphql = ourGraphql;
