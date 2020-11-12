@@ -16,9 +16,13 @@ function executeQuery(query, schema) {
   return ourGraphql({ schema, document });
 }
 
+/*
+ - resolver -> usually added from ("@graphql-tools/schema").addResolversToSchema({ schema, resolvers })
+*/
 describe("graphql execute", () => {
   it("basic root-level with args", async () => {
-    let spyArgs;
+    let rootQueryTestResolveArgs;
+
     const schema = new GraphQLSchema({
       query: new GraphQLObjectType({
         name: "Query",
@@ -29,9 +33,8 @@ describe("graphql execute", () => {
               aInt: { type: GraphQLInt },
             },
             resolve: (source, args) => {
-              spyArgs = args;
+              rootQueryTestResolveArgs = args;
               // source = undefined
-              // args = { aStr: 'String!', aInt: -123 }
               return "Query.test.name";
             },
           },
@@ -39,23 +42,25 @@ describe("graphql execute", () => {
       }),
     });
 
-    const result = executeQuery('{ test(aInt: -123) }', schema);
+    const result = executeQuery("{ test(aInt: -123) }", schema);
 
-    deepEqual(spyArgs, { aInt: '-123' });
+    deepEqual(rootQueryTestResolveArgs, { aInt: "-123" });
     equal(result.data.test, "Query.test.name");
   });
 
   it("root-level with inner object, root and resolver args", async () => {
-    let resolverArgs;
-    let rootArgs;
+    // spies
+    let personNameResolveArgs;
+    let rootQueryTestResolveArgs;
+
+    // build schema
     const PersonType = new GraphQLObjectType({
       name: "Person",
       fields: {
         name: {
           type: GraphQLString,
           resolve: (source, args) => {
-            resolverArgs = Object.assign({}, source)
-            // source = "test resolver"
+            personNameResolveArgs = Object.assign({}, source);
             // args = {}
             return "PersonType.name";
           },
@@ -73,9 +78,8 @@ describe("graphql execute", () => {
               aInt: { type: GraphQLInt },
             },
             resolve: (source, args) => {
-              rootArgs = args;
+              rootQueryTestResolveArgs = args;
               // source = undefined
-              // args = { aInt: -123 }
               return {
                 // uses this if no Person.name.resolve found
                 name: "Query.test.name",
@@ -86,25 +90,28 @@ describe("graphql execute", () => {
       }),
     });
 
-    const result = executeQuery(
-      '{ test(aInt: -123) { name } }',
-      schema
-    );
+    const result = executeQuery("{ test(aInt: -123) { name } }", schema);
 
-    deepEqual(rootArgs, { aInt: -123 })
-    deepEqual(resolverArgs, { name: 'Query.test.name' })
+    deepEqual(rootQueryTestResolveArgs, { aInt: -123 });
+    deepEqual(personNameResolveArgs, { name: "Query.test.name" });
     deepEqual(result.data.test, { name: "PersonType.name" });
   });
 
   it("Different root-level with inner", async () => {
-    let fnSpy = false;
+    // spies
+    let rootQueryTestResolveSpy = false;
+    let rootPersonResolveSpy = false;
+    let personResolveSource;
+    const parentResponse = { name: "wrong name" };
+
+    // build schema
     const PersonType = new GraphQLObjectType({
       name: "Person",
       fields: {
         name: {
           type: GraphQLString,
           resolve: (source, args) => {
-            // source = ""
+            personResolveSource = Object.assign({}, source);
             // args = {}
             return "PersonType.name";
           },
@@ -122,7 +129,7 @@ describe("graphql execute", () => {
               aInt: { type: GraphQLInt },
             },
             resolve: (source, args) => {
-              fnSpy = true;
+              rootQueryTestResolveSpy = true;
               return {
                 // uses this if no Person.name.resolve found
                 name: "Query.test.name",
@@ -132,7 +139,10 @@ describe("graphql execute", () => {
           // only needed if want to query person at root
           person: {
             type: PersonType,
-            resolve: () => "",
+            resolve: () => {
+              rootPersonResolveSpy = true;
+              return Object.assign({}, parentResponse);
+            },
           },
         },
       }),
@@ -141,7 +151,10 @@ describe("graphql execute", () => {
     // Root-level person
     const result = executeQuery("{ person { name } }", schema);
 
-    equal(fnSpy, false);
+    equal(rootQueryTestResolveSpy, false);
+    equal(rootPersonResolveSpy, true);
+
+    deepEqual(personResolveSource, parentResponse);
     deepEqual(result.data.person, { name: "PersonType.name" });
   });
 });
