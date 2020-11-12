@@ -18,7 +18,7 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
   if (selection.arguments[0]) {
     operation.argName = selection.arguments[0].name.value; // kind:Argument
     operation.argValue = selection.arguments[0].value.value;
-    operation.argType = selection.arguments[0].value.kind; // FOR validation
+    // would validate against "selection.arguments[0].value.kind"
   }
 
   function executeSelectionSetV2(
@@ -43,9 +43,7 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
         logger(`USING 1. - resolver schema._typeMap.Query._fields[${field}]`);
         const resolverData = schema._typeMap.Query._fields[field].resolve(
           null,
-          {
-            [operation.argName]: operation.argValue,
-          }
+          { [operation.argName]: operation.argValue }
         );
         logger("resolverData", resolverData);
         allResp[field] = resolverData || {};
@@ -54,7 +52,6 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
 
       // scenario 2 and 3. Schema type
       if (
-        schema._typeMap[schemaType] &&
         schema._typeMap[schemaType]._fields &&
         schema._typeMap[schemaType]._fields[field] &&
         schema._typeMap[schemaType]._fields[field].resolve
@@ -62,8 +59,9 @@ const validateAndExecuteOpV2 = (opNode, schema) => {
         logger(
           `USING - 2. resolver schema._typeMap[${schemaType}]._fields[${field}].resolve`
         );
+        // parent resolver data
         const resolverData = schema._typeMap[schemaType]._fields[field].resolve(
-          allResp // parent resolver data
+          allResp
         );
         logger("resolverData", resolverData);
         allResp[field] = resolverData || {};
