@@ -1,7 +1,7 @@
 const { equal, deepEqual } = require("assert");
 
 const {
-  executeSync,
+  execute,
   GraphQLSchema,
   GraphQLObjectType,
   parse,
@@ -12,8 +12,8 @@ const { ourGraphql } = require("../src/graphql-server");
 
 function executeQuery(query, schema) {
   const document = parse(query);
-  // return executeSync({ schema, document });
-  return ourGraphql({ schema, document });
+  return execute({ schema, document });
+  // return ourGraphql({ schema, document });
 }
 
 /*
