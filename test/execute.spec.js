@@ -1,19 +1,23 @@
 const { equal, deepEqual } = require("assert");
 
 const {
+  scenarioThree,
+  scenarioTwo,
+  scenarioOne,
+} = require("../src/graphql-server/ast");
+
+const {
   execute,
   GraphQLSchema,
   GraphQLObjectType,
-  parse,
   GraphQLString, // scalar
   GraphQLInt, // scalar
 } = require("graphql");
 const { ourGraphql } = require("../src/graphql-server");
 
-function executeQuery(query, schema) {
-  const document = parse(query);
-  return execute({ schema, document });
-  // return ourGraphql({ schema, document });
+function executeQuery(document, schema) {
+  // return execute({ schema, document });
+  return ourGraphql({ schema, document });
 }
 
 /*
@@ -46,7 +50,7 @@ describe("graphql execute", () => {
       }),
     });
 
-    const result = executeQuery("{ test(aInt: -123) }", schema);
+    const result = executeQuery(scenarioOne, schema);
 
     deepEqual(rootQueryTestResolveArgs, { aInt: "-123" });
     equal(result.data.test, "Query.test.name");
@@ -99,7 +103,7 @@ describe("graphql execute", () => {
       }),
     });
 
-    const result = executeQuery("{ test(aInt: -123) { name } }", schema);
+    const result = executeQuery(scenarioTwo, schema);
 
     deepEqual(rootQueryTestResolveArgs, { aInt: -123 });
     deepEqual(personNameResolveArgs, { name: "Query.test.name" });
@@ -164,7 +168,7 @@ describe("graphql execute", () => {
     });
 
     // Root-level person
-    const result = executeQuery("{ person { name } }", schema);
+    const result = executeQuery(scenarioThree, schema);
 
     equal(rootQueryTestResolveSpy, false);
     equal(rootPersonResolveSpy, true);

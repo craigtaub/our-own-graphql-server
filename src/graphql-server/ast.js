@@ -1,6 +1,7 @@
 // All below generated from 'require("graphql").parse'
 
-exports.scenarioThree = {
+// { test(aInt: -123) }
+exports.scenarioOne = {
   kind: "Document",
   definitions: [
     {
@@ -13,45 +14,21 @@ exports.scenarioThree = {
             kind: "Field",
             name: {
               kind: "Name",
-              value: "users",
+              value: "test",
             },
             arguments: [
               {
                 kind: "Argument",
                 name: {
                   kind: "Name",
-                  value: "id",
+                  value: "aInt",
                 },
                 value: {
-                  kind: "StringValue",
-                  value: "one",
+                  kind: "IntValue",
+                  value: "-123",
                 },
               },
             ],
-            selectionSet: {
-              kind: "SelectionSet",
-              selections: [
-                {
-                  kind: "Field",
-                  name: {
-                    kind: "Name",
-                    value: "address",
-                  },
-                  selectionSet: {
-                    kind: "SelectionSet",
-                    selections: [
-                      {
-                        kind: "Field",
-                        name: {
-                          kind: "Name",
-                          value: "road",
-                        },
-                      },
-                    ],
-                  },
-                },
-              ],
-            },
           },
         ],
       },
@@ -59,6 +36,7 @@ exports.scenarioThree = {
   ],
 };
 
+// { test(aInt: -123) { name } }
 exports.scenarioTwo = {
   kind: "Document",
   definitions: [
@@ -72,18 +50,18 @@ exports.scenarioTwo = {
             kind: "Field",
             name: {
               kind: "Name",
-              value: "users",
+              value: "test",
             },
             arguments: [
               {
                 kind: "Argument",
                 name: {
                   kind: "Name",
-                  value: "id",
+                  value: "aInt",
                 },
                 value: {
-                  kind: "StringValue",
-                  value: "one",
+                  kind: "IntValue",
+                  value: "-123",
                 },
               },
             ],
@@ -94,19 +72,7 @@ exports.scenarioTwo = {
                   kind: "Field",
                   name: {
                     kind: "Name",
-                    value: "address",
-                  },
-                  selectionSet: {
-                    kind: "SelectionSet",
-                    selections: [
-                      {
-                        kind: "Field",
-                        name: {
-                          kind: "Name",
-                          value: "road",
-                        },
-                      },
-                    ],
+                    value: "name",
                   },
                 },
               ],
@@ -118,13 +84,13 @@ exports.scenarioTwo = {
   ],
 };
 
-exports.scenarioOne = {
+// { person { name } }
+exports.scenarioThree = {
   kind: "Document",
   definitions: [
     {
       kind: "OperationDefinition",
       operation: "query",
-      directives: [],
       selectionSet: {
         kind: "SelectionSet",
         selections: [
@@ -132,22 +98,9 @@ exports.scenarioOne = {
             kind: "Field",
             name: {
               kind: "Name",
-              value: "users",
+              value: "person",
             },
-            arguments: [
-              {
-                kind: "Argument",
-                name: {
-                  kind: "Name",
-                  value: "id",
-                },
-                value: {
-                  kind: "StringValue",
-                  value: "one",
-                  block: false,
-                },
-              },
-            ],
+            arguments: [],
             selectionSet: {
               kind: "SelectionSet",
               selections: [
@@ -155,7 +108,7 @@ exports.scenarioOne = {
                   kind: "Field",
                   name: {
                     kind: "Name",
-                    value: "email",
+                    value: "name",
                   },
                 },
               ],
